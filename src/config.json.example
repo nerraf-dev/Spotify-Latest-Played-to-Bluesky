@@ -1,7 +1,14 @@
 {
-    "spotify_client_id": "your_client_id",
-    "spotify_client_secret": "your_client_secret",
-    "spotify_redirect_uri": "your_redirect_uri",
-    "bsky_handle": "your_bsky_handle",
-    "bsky_password": "your_bsky_password"
+    "spotify": {
+        "client_id":    "the client id",
+        "client_secret":"your spotify app dev key",
+        "redirect_uri": "http://localhost:1234",
+        "scope":        "user-library-read user-read-playback-state user-read-recently-played",
+        "cache_path":   ".cache"
+    },
+    "bluesky": {
+        "handle": "your-user-name.whatever",
+        "password": "your super strong password",
+        "session": "leave-the-default"
+    }
 }
