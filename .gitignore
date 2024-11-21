@@ -1,6 +1,6 @@
 # .gitignore for Python
 
-settings.py
+config.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
