@@ -1,12 +1,8 @@
 import time, os, spotipy
-from turtle import listen
-
 from dotenv import load_dotenv
 from utils import init_spotipy, get_track_info, get_now_playing
-from atproto import Client, client_utils
-from bsky_utils import post_now_playing, post_tracks, get_did_for_handle
-
-
+from atproto import Client
+from bsky_utils import post_tracks, get_did_for_handle
 
 
 def run_test_mode():
@@ -31,17 +27,12 @@ def run_test_mode():
 
 def initialise():
     sp = init_spotipy()
-    currentTrack = None
-    client = Client()
-    print(client)
-    client.login(os.getenv('BLUESKY_HANDLE'), os.getenv('BLUESKY_PASSWORD'))
     listened = []
-    # remainingTime = 9999
-    return (sp, currentTrack, client, listened)
+    return (sp, None, listened)
 
 def main():
-    load_dotenv()  
-    sp, currentTrack, client, listened = initialise()
+    load_dotenv()
+    sp, currentTrack, listened = initialise()
     
     # Enable test mode
     test_mode = False
@@ -65,9 +56,8 @@ def main():
                     print("Stuck on repeat")
                 post_tracks(listened)
                 listened.clear()
-
             time.sleep(min(remainingTime, 10))
-            
+
         except spotipy.exceptions.SpotifyException as e:
             if e.http_status == 429:
                 retryAfter = int(e.headers.get('Retry-After', 10))
