@@ -76,13 +76,9 @@ def post_tracks(tracks):
     tb = client_utils.TextBuilder()
     tb.mention(os.getenv('BLUESKY_MENTION_HANDLE'), userDID)    
     tb.text(f" recently listened to: : \n\n")
-    tb.link(f"{tracks[0]['title']} ", tracks[0]['url'])
-    tb.text(f"by {tracks[0]['artist']}, \n")
-    tb.link(f"{tracks[1]['title']} ", tracks[1]['url'])
-    tb.text(f"by {tracks[1]['artist']}, \n")
-    tb.link(f"{tracks[2]['title']} ", tracks[2]['url'])
-    tb.text(f"by {tracks[2]['artist']}\n")
-    
+    for track in tracks:
+        tb.link(f"{track['title']}", track['url'])
+        tb.text(f" by {track['artist']}, \n")
     client.send_post(tb)
 
     postText = f"Recently listened to: {tracks[0]['title']} by {tracks[0]['artist']}, {tracks[1]['title']} by {tracks[1]['artist']}, {tracks[2]['title']} by {tracks[2]['artist']}"
