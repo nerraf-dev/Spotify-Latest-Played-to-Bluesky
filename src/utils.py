@@ -1,4 +1,5 @@
 import json
+from requests import session
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from atproto import Client
@@ -16,7 +17,8 @@ def get_bsky_session(config):
     Get Bluesky session
     """
     client = Client()
-    session = client.login(config['bluesky']['handle'], config['bluesky']['password'])
+    client.login(config['bluesky']['handle'], config['bluesky']['password'])
+    session = client.export_session_string()
     return session
 
 def init_spotipy(config):
