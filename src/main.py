@@ -1,64 +1,80 @@
-import time
+import time, os, spotipy
+from turtle import listen
 
-from utils import get_config, init_spotipy
-# from spotify_utils import get_now_playing
+from dotenv import load_dotenv
+from utils import init_spotipy, get_track_info, get_now_playing
 from atproto import Client, client_utils
-from utils import get_config
-
-# Load config
-config = get_config()
-# Bluesky client
-client = Client()
-client.login(config['bluesky']['handle'], config['bluesky']['password'])
+from bsky_utils import post_now_playing, post_tracks, get_did_for_handle
 
 
-def get_track_info(track):
-    if track and track['item']:
-        return {
-            "title": track['item']['name'],
-            "artist": track['item']['artists'][0]['name'],
-            "url": track['item']['external_urls']['spotify']
+
+
+def run_test_mode():
+    listened = []
+    print("Test mode: Enabled")
+    # Simulate adding tracks to the listened list
+    n = 10
+    for i in range(3):
+        track_info = {
+            "title": f"Test Track {i+n}",
+            "artist": f"Test Artist {i+n}",
+            "url": f"http://example.com/track{i+n}"
         }
-    else:
-        return None
+        listened.append(track_info)
+    client = Client()
+    client.login(os.getenv('BLUESKY_HANDLE'), os.getenv('BLUESKY_PASSWORD'))
+    # Post the simulated tracks
+    mention_did = get_did_for_handle(client, os.getenv('BLUESKY_MENTION_HANDLE'))
+    post_tracks(listened)
+    print("Test mode: Posted simulated tracks")
+    return
 
-
-def main():
-
-    sp = init_spotipy(config)
+def initialise():
+    sp = init_spotipy()
     currentTrack = None
-    timeRemaining = 30     # seconds
     client = Client()
     print(client)
-    client.login(config['bluesky']['handle'], config['bluesky']['password'])
+    client.login(os.getenv('BLUESKY_HANDLE'), os.getenv('BLUESKY_PASSWORD'))
+    listened = []
+    # remainingTime = 9999
+    return (sp, currentTrack, client, listened)
+
+def main():
+    load_dotenv()  
+    sp, currentTrack, client, listened = initialise()
+    
+    # Enable test mode
+    test_mode = False
+    if test_mode:
+        run_test_mode()
+    
     while True:
-        print("check")
-        # timeRemaining, currentTrack = get_now_playing(sp, currentTrack, config)
-        track = sp.current_user_playing_track()     # Get track info
-        print(track)
-        if track and track['item']:
-            duration = track['item']['duration_ms'] # in milliseconds
-            timeRemaining = max(0, duration - track['progress_ms'])/1000 # in seconds
-            print(timeRemaining)
-            nowPlaying = get_track_info(track)
-            if nowPlaying != currentTrack:
-                # post_now_playing(client, nowPlaying)
-                tb = client_utils.TextBuilder()
-                trackInfo = f"{nowPlaying['title']} by {nowPlaying['artist']}\n\n"
-                # tb.text(trackInfo)
-                tb.text("Now Playing: ")
-                tb.link(trackInfo, nowPlaying['url'])
-                # client.send_post(tb)
-                print(tb)
-                currentTrack = nowPlaying
+        try:
+            currentTrack, duration, progress = get_now_playing(sp, currentTrack)
+            print(f"Current track: {currentTrack}")
+            remainingTime = (duration - progress) / 1000    # in seconds
+            print(f"Remaining time: {remainingTime}")
+            if currentTrack and progress >= duration * 0.75:
+                trackInfo = get_track_info(currentTrack)
+                listened.append(trackInfo)
+                currentTrack = None
+                print(f"Added track to listened: {trackInfo}")
+            
+            if len(listened) >= 3:
+                if (listened[0] == listened[1]) and (listened[1] == listened[2]):
+                    print("Stuck on repeat")
+                post_tracks(listened)
+                listened.clear()
+
+            time.sleep(min(remainingTime, 10))
+        except spotipy.exceptions.SpotifyException as e:
+            if e.http_status == 429:
+                retryAfter = int(e.headers.get('Retry-After', 10))
+                print(f"Rate limited. Retrying in {retryAfter} seconds")
+                time.sleep(retryAfter)
             else:
-                print("No change in track")
-                timeRemaining = max(0, duration - track['progress_ms'])/1000 # in seconds
-                print(timeRemaining)
-        else:
-            print("No track currently playing")
-            timeRemaining = 30
-        time.sleep(timeRemaining)
+                print(f"Error: {e}")
+                time.sleep(10)
 
 
 if __name__ == "__main__":
