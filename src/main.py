@@ -1,62 +1,71 @@
-import re
-import time
+import time, os, spotipy
+from turtle import listen
 
-import spotipy
-
-from utils import get_config, init_spotipy
-# from spotify_utils import get_now_playing
+from dotenv import load_dotenv
+from utils import init_spotipy, get_track_info, get_now_playing
 from atproto import Client, client_utils
-from bsky_utils import post_now_playing, post_tracks
+from bsky_utils import post_now_playing, post_tracks, get_did_for_handle
 
 
-# Load config
-config = get_config()
-# Bluesky client
-client = Client()
-client.login(config['bluesky']['handle'], config['bluesky']['password'])
 
 
-def get_track_info(track):
-    if track and track['item']:
-        return {
-            "title": track['item']['name'],
-            "artist": track['item']['artists'][0]['name'],
-            "url": track['item']['external_urls']['spotify']
+def run_test_mode():
+    listened = []
+    print("Test mode: Enabled")
+    # Simulate adding tracks to the listened list
+    n = 10
+    for i in range(3):
+        track_info = {
+            "title": f"Test Track {i+n}",
+            "artist": f"Test Artist {i+n}",
+            "url": f"http://example.com/track{i+n}"
         }
-    else:
-        return None
+        listened.append(track_info)
+    client = Client()
+    client.login(os.getenv('BLUESKY_HANDLE'), os.getenv('BLUESKY_PASSWORD'))
+    # Post the simulated tracks
+    mention_did = get_did_for_handle(client, os.getenv('BLUESKY_MENTION_HANDLE'))
+    post_tracks(listened)
+    print("Test mode: Posted simulated tracks")
+    return
 
-
-def main():
-
-    sp = init_spotipy(config)
+def initialise():
+    sp = init_spotipy()
     currentTrack = None
     client = Client()
     print(client)
-    client.login(config['bluesky']['handle'], config['bluesky']['password'])
+    client.login(os.getenv('BLUESKY_HANDLE'), os.getenv('BLUESKY_PASSWORD'))
     listened = []
+    # remainingTime = 9999
+    return (sp, currentTrack, client, listened)
+
+def main():
+    load_dotenv()  
+    sp, currentTrack, client, listened = initialise()
+    
+    # Enable test mode
+    test_mode = False
+    if test_mode:
+        run_test_mode()
+    
     while True:
         try:
-            track = sp.current_user_playing_track()     # Get track info
-            print(track)
-            if track and track['item']:
-                duration = track['item']['duration_ms'] # in milliseconds
-                progress = track['progress_ms']
-                if progress < duration * 0.25:
-                    currentTrack = track
-            
-            # ToDo: Should I prevent tracks being repeated?
+            currentTrack, duration, progress = get_now_playing(sp, currentTrack)
+            print(f"Current track: {currentTrack}")
+            remainingTime = (duration - progress) / 1000    # in seconds
+            print(f"Remaining time: {remainingTime}")
             if currentTrack and progress >= duration * 0.75:
                 trackInfo = get_track_info(currentTrack)
                 listened.append(trackInfo)
                 currentTrack = None
-
+                print(f"Added track to listened: {trackInfo}")
             
             if len(listened) >= 3:
-                post_tracks(client, listened)
-                listened = []
+                if (listened[0] == listened[1]) and (listened[1] == listened[2]):
+                    print("Stuck on repeat")
+                post_tracks(listened)
+                listened.clear()
 
-            remainingTime = (duration - progress) / 1000    # in seconds
             time.sleep(min(remainingTime, 10))
         except spotipy.exceptions.SpotifyException as e:
             if e.http_status == 429:

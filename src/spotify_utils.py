@@ -1,22 +1,20 @@
 from utils import init_spotipy
 from bsky_utils import post_now_playing
 
-# def get_now_playing(sp, currentTrack, client):
-#     track = sp.current_user_playing_track()     # Get track info
-#     if track and track['item']:
-#         duration = track['item']['duration_ms'] # in milliseconds
-#         timeRemaining = max(0, duration - track['progress_ms'])/1000 # in seconds
-#         nowPlaying = get_track_info(track)
-#         if nowPlaying != currentTrack:
-#             post_now_playing(client, nowPlaying)
-#             # print(now_playing)
-#             currentTrack = nowPlaying
-#         else:
-#             print("No change in track")
-#     else:
-#         print("No track currently playing")
-#         timeRemaining = 30
-#     return (timeRemaining, currentTrack)
+
+
+def get_now_playing(sp):
+    currentTrack = None
+    track = sp.current_user_playing_track()     # Get track info
+    if track and track['item']:
+        duration = track['item']['duration_ms'] # in milliseconds
+        progress = track['progress_ms']
+        if progress < duration * 0.25:
+            currentTrack = track
+        remainingTime = (duration - progress) / 1000    # in seconds
+        return currentTrack, remainingTime
+    else:
+        return None, 9999
 
 # def get_track_info(track):
 #     if track and track['item']:
