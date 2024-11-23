@@ -22,32 +22,6 @@ def get_did_for_handle(client, handle):
     did = response['did']
     return did
 
-def post_now_playing(nowPlaying):
-    """
-    Posts the currently playing song to Bluesky.
-
-    This function logs into the Bluesky client using credentials from environment variables,
-    constructs a post mentioning a user and including the currently playing song's title,
-    URL, and artist, and then sends the post.
-
-    Args:
-        nowPlaying (dict): A dictionary containing the currently playing song's details.
-            Expected keys are:
-                - 'title': The title of the song.
-                - 'url': The URL to the song.
-                - 'artist': The artist of the song.
-
-    Raises:
-        Exception: If there is an issue with logging in or sending the post.
-    """
-    client = login_bluesky()
-    userDID = get_did_for_handle(client, os.getenv('BLUESKY_MENTION_HANDLE'))
-    tb = client_utils.TextBuilder()
-    tb.mention(os.getenv('BLUESKY_MENTION_HANDLE'), userDID)
-    tb.text(f" is currently listening to  \n\n")
-    tb.link(f"{nowPlaying['title']}", nowPlaying['url'])
-    tb.text(f" by {nowPlaying['artist']}")
-    client.send_post(tb)
 
 def post_tracks(tracks):
     """
@@ -62,14 +36,6 @@ def post_tracks(tracks):
     Environment Variables:
         BLUESKY_HANDLE (str): The handle for logging into Bluesky.
         BLUESKY_PASSWORD (str): The password for logging into Bluesky.
-        BLUESKY_MENTION_HANDLE (str): The handle of the user to mention in the post.
-    Example:
-        tracks = [
-            {'title': 'Song 1', 'url': 'http://example.com/song1', 'artist': 'Artist 1'},
-            {'title': 'Song 2', 'url': 'http://example.com/song2', 'artist': 'Artist 2'},
-            {'title': 'Song 3', 'url': 'http://example.com/song3', 'artist': 'Artist 3'}
-        ]
-        post_tracks(tracks)
     """
     client = login_bluesky
     # userDID = get_did_for_handle(client, os.getenv('BLUESKY_MENTION_HANDLE'))
