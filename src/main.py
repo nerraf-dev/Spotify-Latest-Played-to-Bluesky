@@ -51,9 +51,9 @@ def main():
     while True:
         try:
             currentTrack, duration, progress = get_now_playing(sp, currentTrack)
-            print(f"Current track: {currentTrack}")
+            # print(f"Current track: {currentTrack}")
             remainingTime = (duration - progress) / 1000    # in seconds
-            print(f"Remaining time: {remainingTime}")
+            # print(f"Remaining time: {remainingTime}")
             if currentTrack and progress >= duration * 0.75:
                 trackInfo = get_track_info(currentTrack)
                 listened.append(trackInfo)
@@ -67,6 +67,7 @@ def main():
                 listened.clear()
 
             time.sleep(min(remainingTime, 10))
+            
         except spotipy.exceptions.SpotifyException as e:
             if e.http_status == 429:
                 retryAfter = int(e.headers.get('Retry-After', 10))
@@ -75,7 +76,6 @@ def main():
             else:
                 print(f"Error: {e}")
                 time.sleep(10)
-
 
 if __name__ == "__main__":
     main()
