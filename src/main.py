@@ -31,41 +31,53 @@ def initialise():
     return (sp, None, listened)
 
 def main():
-    load_dotenv()
-    sp, currentTrack, listened = initialise()
-    
-    # Enable test mode
-    test_mode = False
-    if test_mode:
-        run_test_mode()
-    
-    while True:
-        try:
-            currentTrack, duration, progress = get_now_playing(sp, currentTrack)
-            # print(f"Current track: {currentTrack}")
-            remainingTime = (duration - progress) / 1000    # in seconds
-            # print(f"Remaining time: {remainingTime}")
-            if currentTrack and progress >= duration * 0.75:
-                trackInfo = get_track_info(currentTrack)
-                listened.append(trackInfo)
-                currentTrack = None
-                print(f"Added track to listened: {trackInfo}")
-            
-            if len(listened) >= 3:
-                if (listened[0] == listened[1]) and (listened[1] == listened[2]):
-                    print("Stuck on repeat")
-                post_tracks(listened)
-                listened.clear()
-            time.sleep(min(remainingTime, 10))
+    if not load_dotenv():
+        print("Error: Could not load environment variables")
+        return
+    print("Environment variables loaded")
+    print(f"SPOTIFY_CLIENT_ID: {os.getenv('SPOTIFY_CLIENT_ID')}")
+    print(f"SPOTIFY_CLIENT_SECRET: {os.getenv('SPOTIFY_CLIENT_SECRET')}")
+    print(f"SPOTIFY_REDIRECT_URI: {os.getenv('SPOTIFY_REDIRECT_URI')}")
+    print(f"SPOTIFY_CACHE_PATH: {os.getenv('SPOTIFY_CACHE_PATH')}")
+    print(f"BLUESKY_HANDLE: {os.getenv('BLUESKY_HANDLE')}")
+    print(f"BLUESKY_PASSWORD: {os.getenv('BLUESKY_PASSWORD')}")
+    print(f"BLUESKY_MENTION_HANDLE: {os.getenv('BLUESKY_MENTION_HANDLE')}")
 
-        except spotipy.exceptions.SpotifyException as e:
-            if e.http_status == 429:
-                retryAfter = int(e.headers.get('Retry-After', 10))
-                print(f"Rate limited. Retrying in {retryAfter} seconds")
-                time.sleep(retryAfter)
-            else:
-                print(f"Error: {e}")
-                time.sleep(10)
+    
+    # sp, currentTrack, listened = initialise()
+    
+    # # Enable test mode
+    # test_mode = False
+    # if test_mode:
+    #     run_test_mode()
+    
+    # while True:
+    #     try:
+    #         currentTrack, duration, progress = get_now_playing(sp, currentTrack)
+    #         # print(f"Current track: {currentTrack}")
+    #         remainingTime = (duration - progress) / 1000    # in seconds
+    #         # print(f"Remaining time: {remainingTime}")
+    #         if currentTrack and progress >= duration * 0.75:
+    #             trackInfo = get_track_info(currentTrack)
+    #             listened.append(trackInfo)
+    #             currentTrack = None
+    #             print(f"Added track to listened: {trackInfo}")
+            
+    #         if len(listened) >= 3:
+    #             if (listened[0] == listened[1]) and (listened[1] == listened[2]):
+    #                 print("Stuck on repeat")
+    #             post_tracks(listened)
+    #             listened.clear()
+    #         time.sleep(min(remainingTime, 10))
+
+    #     except spotipy.exceptions.SpotifyException as e:
+    #         if e.http_status == 429:
+    #             retryAfter = int(e.headers.get('Retry-After', 10))
+    #             print(f"Rate limited. Retrying in {retryAfter} seconds")
+    #             time.sleep(retryAfter)
+    #         else:
+    #             print(f"Error: {e}")
+    #             time.sleep(10)
 
 if __name__ == "__main__":
     main()
