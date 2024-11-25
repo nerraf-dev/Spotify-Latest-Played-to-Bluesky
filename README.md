@@ -37,6 +37,24 @@ Spotify-Playing-Now is a Python application that posts the tracks you are curren
     pip install -r requirements.txt
     ```
 
+4. Create a `.env` file from the example:
+
+    ```bash
+    cp .env.example .env
+    ```
+
+5. Fill in your own values in the `.env` file:
+
+    ```env
+    SPOTIFY_CLIENT_ID=your_spotify_client_id
+    SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+    SPOTIFY_REDIRECT_URI=http://localhost:1234
+    SPOTIFY_SCOPE=user-library-read user-read-playback-state user-read-recently-played
+    SPOTIFY_CACHE_PATH=.cache
+    BLUESKY_HANDLE=your_bluesky_handle
+    BLUESKY_PASSWORD=your_bluesky_password
+    BLUESKY_MENTION_HANDLE=@handle-to-mention
+    ```
 
 ## Usage
 
@@ -47,4 +65,22 @@ Spotify-Playing-Now is a Python application that posts the tracks you are curren
     ```
 
 2. The application will start listening for tracks on Spotify and post them to Bluesky.
+
+## Test Mode
+
+To quickly test the functionality without listening to tracks, you can enable test mode. In `src/main.py`, set `test_mode` to `True`:
+
+```python
+    # Enable test mode
+    test_mode = True
+```
+
+## Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
+
+## 
+License
+This project is licensed under the MIT License. See the LICENSE file for details.
+
 

@@ -35,28 +35,13 @@ def update_details():
         bluesky_password = input("Enter Bluesky Password: ")
         f.write(f"SPOTIFY_CLIENT_ID={spotify_client_id}\n")
         f.write(f"SPOTIFY_CLIENT_SECRET={spotify_client_secret}\n")
-        f.write(f"SPOTIFY_REDIRECT_URI=http://localhost:1234\n")
-        f.write(f"SPOTIFY_SCOPE=user-read-currently-playing\n")
-        f.write(f"SPOTIFY_CACHE_PATH=.cache\n")
+        f.write(f"SPOTIFY_REDIRECT_URI={os.getenv('SPOTIFY_REDIRECT_URI', 'http://localhost:1234')}\n")
+        f.write(f"SPOTIFY_SCOPE={os.getenv('SPOTIFY_SCOPE', 'user-read-currently-playing')}\n")
+        f.write(f"SPOTIFY_CACHE_PATH={os.getenv('SPOTIFY_CACHE_PATH', '.cache')}\n")
         f.write(f"BLUESKY_HANDLE={bluesky_handle}\n")
         f.write(f"BLUESKY_PASSWORD={bluesky_password}\n")
         print("Environment variables saved to .env file")
 
-def check_spotify_details():
-    sp = init_spotipy()
-    try:
-        user = sp.current_user()
-        print(f"Spotify User: {user['display_name']} ({user['id']})")
-    except spotipy.exceptions.SpotifyException as e:
-        print(f"Error: {e}")
-
-def check_bluesky_details():
-    client = login_bluesky()
-    try:
-        user = client.com.atproto.identity.resolve_handle({'handle': os.getenv('BLUESKY_HANDLE')})
-        print(f"Bluesky User: {user['handle']} ({user['did']})")
-    except Exception as e:
-        print(f"Error: {e}")
 
 ########
 #  #### Spotify Utils ####
@@ -71,14 +56,20 @@ def init_spotipy():
     Returns:
         spotipy.Spotify: An authenticated Spotipy client object.
     """
-    sp = spotipy.Spotify(
-        auth_manager=SpotifyOAuth(
-            client_id=os.getenv('SPOTIFY_CLIENT_ID'),
-            client_secret=os.getenv('SPOTIFY_CLIENT_SECRET'),
-            redirect_uri=os.getenv('SPOTIFY_REDIRECT_URI'),
-            scope='user-read-currently-playing',
-            cache_path=os.getenv('SPOTIFY_CACHE_PATH')
-            ))
+    if not os.getenv('SPOTIFY_CLIENT_ID') or not os.getenv('SPOTIFY_CLIENT_SECRET'):
+        raise spotipy.SpotifyException(400, -1, "Missing Spotify credentials")
+    try:
+        sp = spotipy.Spotify(
+            auth_manager=SpotifyOAuth(
+                client_id=os.getenv('SPOTIFY_CLIENT_ID'),
+                client_secret=os.getenv('SPOTIFY_CLIENT_SECRET'),
+                redirect_uri=os.getenv('SPOTIFY_REDIRECT_URI'),
+                scope='user-read-currently-playing',
+                cache_path=os.getenv('SPOTIFY_CACHE_PATH')
+                ))
+    except spotipy.SpotifyException as e:
+        print(f"Error initialising Spotify: {e}")
+        raise
     return sp
 
 
