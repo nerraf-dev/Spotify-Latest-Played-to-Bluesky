@@ -1,8 +1,64 @@
 import os
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
+from atproto import Client
+from bsky_utils import login_bluesky, get_did_for_handle, post_tracks
 
 
+#########
+# Initialization and setup
+#########
+def run_test_mode():
+    listened = []
+    print("Test mode: Enabled")
+    # Simulate adding tracks to the listened list
+    n = 10
+    for i in range(3):
+        track_info = {
+            "title": f"Test Track {i+n}",
+            "artist": f"Test Artist {i+n}",
+            "url": f"http://example.com/track{i+n}"
+        }
+        listened.append(track_info)
+    # Post the simulated tracks
+    if not post_tracks(listened):
+        print("Error: Could not post tracks to Bluesky")
+        return
+    print("Test mode: Posted simulated tracks")
+    return
+
+def update_details():
+    with open(".env", "w") as f:
+        spotify_client_id = input("Enter Spotify Client ID: ")
+        spotify_client_secret = input("Enter Spotify Client Secret: ")
+        bluesky_handle = input("Enter Bluesky Handle: ")
+        bluesky_password = input("Enter Bluesky Password: ")
+        f.write(f"SPOTIFY_CLIENT_ID={spotify_client_id}\n")
+        f.write(f"SPOTIFY_CLIENT_SECRET={spotify_client_secret}\n")
+        f.write(f"SPOTIFY_REDIRECT_URI=http://localhost:1234\n")
+        f.write(f"SPOTIFY_SCOPE=user-read-currently-playing\n")
+        f.write(f"SPOTIFY_CACHE_PATH=.cache\n")
+        f.write(f"BLUESKY_HANDLE={bluesky_handle}\n")
+        f.write(f"BLUESKY_PASSWORD={bluesky_password}\n")
+        print("Environment variables saved to .env file")
+
+def check_spotify_details():
+    sp = init_spotipy()
+    try:
+        user = sp.current_user()
+        print(f"Spotify User: {user['display_name']} ({user['id']})")
+    except spotipy.exceptions.SpotifyException as e:
+        print(f"Error: {e}")
+
+def check_bluesky_details():
+    client = login_bluesky()
+    try:
+        user = client.com.atproto.identity.resolve_handle({'handle': os.getenv('BLUESKY_HANDLE')})
+        print(f"Bluesky User: {user['handle']} ({user['did']})")
+    except Exception as e:
+        print(f"Error: {e}")
+
+########
 #  #### Spotify Utils ####
 def init_spotipy():
     """

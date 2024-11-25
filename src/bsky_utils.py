@@ -1,10 +1,14 @@
-from math import log
 import os
 from atproto import Client, client_utils
+from atproto.exceptions import UnauthorizedError
 
 def login_bluesky():
     client = Client()
-    client.login(os.getenv('BLUESKY_HANDLE'), os.getenv('BLUESKY_PASSWORD'))
+    try:
+        client.login(os.getenv('BLUESKY_HANDLE'), os.getenv('BLUESKY_PASSWORD'))
+    except UnauthorizedError:
+        print("Invalid Bluesky handle or password. Please update your credentials.")
+        return None
     return client
 
 def get_did_for_handle(client, handle):
@@ -37,7 +41,9 @@ def post_tracks(tracks):
         BLUESKY_HANDLE (str): The handle for logging into Bluesky.
         BLUESKY_PASSWORD (str): The password for logging into Bluesky.
     """
-    client = login_bluesky
+    client = login_bluesky()
+    if not client:
+        return False
     # userDID = get_did_for_handle(client, os.getenv('BLUESKY_MENTION_HANDLE'))
     tb = client_utils.TextBuilder()
     # tb.mention(os.getenv('BLUESKY_MENTION_HANDLE'), userDID)    
@@ -49,3 +55,4 @@ def post_tracks(tracks):
 
     postText = f"Recently listened to: {tracks[0]['title']} by {tracks[0]['artist']}, {tracks[1]['title']} by {tracks[1]['artist']}, {tracks[2]['title']} by {tracks[2]['artist']}"
     print(postText)
+    return True

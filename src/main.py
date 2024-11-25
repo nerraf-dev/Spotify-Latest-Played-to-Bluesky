@@ -1,29 +1,14 @@
-import time, os, spotipy
+import time, spotipy, os
 from dotenv import load_dotenv
-from utils import init_spotipy, get_track_info, get_now_playing
-from atproto import Client
-from bsky_utils import post_tracks, get_did_for_handle
+from bsky_utils import post_tracks
+from utils import (init_spotipy,
+                   get_track_info,
+                   get_now_playing,
+                   run_test_mode, 
+                   update_details,
+                   check_spotify_details,
+                   check_bluesky_details)
 
-
-def run_test_mode():
-    listened = []
-    print("Test mode: Enabled")
-    # Simulate adding tracks to the listened list
-    n = 10
-    for i in range(3):
-        track_info = {
-            "title": f"Test Track {i+n}",
-            "artist": f"Test Artist {i+n}",
-            "url": f"http://example.com/track{i+n}"
-        }
-        listened.append(track_info)
-    client = Client()
-    client.login(os.getenv('BLUESKY_HANDLE'), os.getenv('BLUESKY_PASSWORD'))
-    # Post the simulated tracks
-    mention_did = get_did_for_handle(client, os.getenv('BLUESKY_MENTION_HANDLE'))
-    post_tracks(listened)
-    print("Test mode: Posted simulated tracks")
-    return
 
 def initialise():
     sp = init_spotipy()
@@ -33,8 +18,6 @@ def initialise():
 def load_configuration():
     if not load_dotenv():
         print("""
-            Error: No .env file found.
-              
             To continue you will need your Spotify Developer Client ID and Client Secret.
             You can create a Spotify Developer account and create a new app to get these credentials.
             You will also need your Bluesky handle and password.
@@ -43,25 +26,58 @@ def load_configuration():
               Press Enter to continue...
             """)
         input()
-        with open(".env", "w") as f:
-            spotify_client_id = input("Enter Spotify Client ID: ")
-            spotify_client_secret = input("Enter Spotify Client Secret: ")
-            bluesky_handle = input("Enter Bluesky Handle: ")
-            bluesky_password = input("Enter Bluesky Password: ")
-            f.write(f"SPOTIFY_CLIENT_ID={spotify_client_id}\n")
-            f.write(f"SPOTIFY_CLIENT_SECRET={spotify_client_secret}\n")
-            f.write(f"SPOTIFY_REDIRECT_URI=http://localhost:1234\n")
-            f.write(f"SPOTIFY_SCOPE=user-read-currently-playing\n")
-            f.write(f"SPOTIFY_CACHE_PATH=.cache\n")
-            f.write(f"BLUESKY_HANDLE={bluesky_handle}\n")
-            f.write(f"BLUESKY_PASSWORD={bluesky_password}\n")
-            print("Environment variables saved to .env file")
+        update_details()
         return False
     return True
 
-def main():
+def cli_menu():
     if not load_configuration():
         return
+    print("""
+        Welcome to the Spotify Bluesky Integration!
+        This script will listen for tracks you play on Spotify and post them to Bluesky.
+          
+        """)
+    while True:
+        # print("""
+        # 1. Check Spotify Details
+        # 2. Check Bluesky Details
+        # 3. Update Details
+        # 4. Run Test Mode
+        # 5. Start Listening for Tracks
+        # 6. Exit
+        # """)
+        print("""
+
+        3. Update Details
+
+        5. Start Listening for Tracks
+        6. Exit
+        """)
+        choice = input("Enter your choice: ")
+        # if choice == '1':
+        #     check_spotify_details()
+        # elif choice == '2':
+        #     check_bluesky_details()
+        if choice == '3':
+            update_details()
+        # elif choice == '4':
+        #     run_test_mode()
+        elif choice == '5':
+            main()
+        elif choice == '6':
+            break
+        else:
+            print("Invalid choice. Please try again.")
+
+def main():
+    load_configuration()
+    
+    print("""
+        Listening for tracks...
+          
+        Press Ctrl+C to exit at any time.
+          """)
     
     sp, currentTrack, listened = initialise()
     # Enable test mode
@@ -99,4 +115,5 @@ def main():
                 time.sleep(10)
 
 if __name__ == "__main__":
+    # cli_menu()
     main()
