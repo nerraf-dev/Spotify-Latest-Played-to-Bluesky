@@ -1,14 +1,11 @@
-import time, spotipy, os
-from turtle import listen
+import time, spotipy
 from dotenv import load_dotenv
 from bsky_utils import post_tracks
 from utils import (init_spotipy,
                    get_track_info,
                    get_now_playing,
                    run_test_mode, 
-                   update_details,
-                   check_spotify_details,
-                   check_bluesky_details)
+                   update_details)
 
 
 def initialise():

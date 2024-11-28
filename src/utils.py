@@ -2,7 +2,7 @@ import os
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from atproto import Client
-from bsky_utils import login_bluesky, get_did_for_handle, post_tracks
+from bsky_utils import post_tracks
 
 
 #########
