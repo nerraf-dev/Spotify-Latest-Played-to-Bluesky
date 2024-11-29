@@ -1,4 +1,4 @@
-import time, spotipy
+import time, spotipy, os, psutil
 from dotenv import load_dotenv
 from bsky_utils import post_tracks
 from utils import (init_spotipy,
@@ -30,6 +30,8 @@ def load_configuration():
 
 def main():
     load_configuration()
+    initMem = get_memory_usage()
+    print(f"Initial memory usage: {initMem} MB")
 
     print("""
         Listening for tracks...
@@ -74,6 +76,13 @@ def handle_spotify_exception(e):
     else:
         print(f"Error: {e}")
         time.sleep(10)
+
+def get_memory_usage():
+    process = psutil.Process(os.getpid())
+    memoryInfo= process.memory_info()
+    memoryUsage = memoryInfo.rss / 1024 / 1024
+    return memoryUsage
+
 
 if __name__ == "__main__":
     # cli_menu()
