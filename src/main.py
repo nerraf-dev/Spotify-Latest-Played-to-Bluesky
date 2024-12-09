@@ -64,7 +64,16 @@ def listen_for_tracks(sp, currentTrack, listened):
                     print("Stuck on repeat")
                 post_tracks(listened)
                 listened.clear()
-            time.sleep(min(remainingTime, 10))
+            pollingInterval = 30
+            if remainingTime > 60:
+                pollingInterval = 45
+            elif remainingTime > 30:
+                pollingInterval = 30
+            else:
+                pollingInterval = 15
+            print(f"Remaining time: {remainingTime} seconds, polling interval: {pollingInterval} seconds")
+            # time.sleep(min(remainingTime, 10))
+            time.sleep(pollingInterval)
         except spotipy.exceptions.SpotifyException as e:
             handle_spotify_exception(e)
 

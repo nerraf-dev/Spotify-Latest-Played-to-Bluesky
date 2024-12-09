@@ -1,4 +1,6 @@
-import os
+import os, time
+from pickletools import read_stringnl_noescape
+from httpx import ReadTimeout
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from atproto import Client
@@ -108,13 +110,25 @@ def get_now_playing(sp, currentTrack):
             - duration (int): The duration of the track in milliseconds, or 999999 if no track is playing.
             - progress (int): The progress of the track in milliseconds, or 0 if no track is playing.
     """
-    track = sp.current_user_playing_track()     # Get track info
-    if track and track['item']:
-        duration = track['item']['duration_ms'] # in milliseconds
-        progress = track['progress_ms']
-        if progress < duration * 0.25:
-            currentTrack = track
-            # in seconds
-        return currentTrack, duration, progress
-    else:
-        return (None, 999999, 0)
+    retries = 3
+    for attempt in range(retries):
+        try:
+            track = sp.current_user_playing_track()     # Get track info
+            if track and track['item']:
+                duration = track['item']['duration_ms'] # in milliseconds
+                progress = track['progress_ms']
+                if progress < duration * 0.25:
+                    currentTrack = track
+                return currentTrack, duration, progress
+            return (None, 999999, 0)
+        except ReadTimeout:
+            if attempt < retries - 1:
+                print(f"Read timeout occurred. Retrying... ({attempt + 1}/{retries})")
+                time.sleep(5)  # Wait for 2 seconds before retrying
+            else:
+                print("Read timeout occurred. Max retries reached.")
+                raise
+        except spotipy.SpotifyException as e:
+            print(f"Error getting current track: {e}")
+            raise
+
